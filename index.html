@@ -4,71 +4,78 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#18402D">
-  <title>قارئ الباركود المستقل | نور السنة ستور</title>
+  <title>قارئ الباركود الحي | نور السنة ستور</title>
   <style>
-    :root { color-scheme: light; --green:#18402D; --sage:#5C7364; --gold:#A6783F; --cream:#F2E8DF; --ink:#14241B; --red:#b91c1c; }
-    * { box-sizing:border-box; }
-    body { margin:0; padding:16px; min-height:100vh; background:var(--cream); color:var(--ink); font-family:Tahoma,Arial,sans-serif; }
-    main { max-width:620px; margin:0 auto; }
-    header { background:var(--green); color:#fff; padding:18px 16px; border-radius:16px; border-bottom:4px solid var(--gold); }
-    h1 { font-size:1.25rem; margin:0 0 7px; }
-    header p { margin:0; color:#f4e7d7; line-height:1.7; font-size:.92rem; }
-    .panel { margin-top:14px; background:#fff; border:1px solid #e0d5c9; border-radius:16px; padding:14px; box-shadow:0 4px 12px #18402d0c; }
-    #reader { width:100%; overflow:hidden; border-radius:12px; background:#f8f5f0; min-height:80px; }
-    #reader video { width:100% !important; max-height:62vh; object-fit:cover; border-radius:10px; }
-    #reader img { max-width:100%; }
-    #status { margin:12px 0 0; line-height:1.7; font-size:.93rem; overflow-wrap:anywhere; }
-    .status-error { color:var(--red); }
-    .status-success { color:#166534; font-weight:700; }
-    .controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-    button { flex:1 1 145px; min-height:46px; border:0; border-radius:10px; font-size:.95rem; font-weight:700; padding:10px 14px; cursor:pointer; }
-    button:disabled { opacity:.55; cursor:not-allowed; }
-    .primary { color:#fff; background:var(--green); }
-    .secondary { color:var(--green); background:#eee7df; }
-    .gold { color:#fff; background:var(--gold); }
-    #resultBox { display:none; margin-top:12px; padding:12px; border:1px solid #b8c8b9; background:#f0f7f0; border-radius:10px; }
-    #resultValue { display:block; direction:ltr; text-align:center; font-size:1.25rem; font-weight:800; letter-spacing:.04em; overflow-wrap:anywhere; padding:8px; }
-    .small { color:#5c7364; font-size:.82rem; line-height:1.7; margin:12px 2px 0; }
-    a { color:var(--green); }
-    .hidden { display:none !important; }
-    @media(max-width:420px){body{padding:10px}.panel{padding:10px}header{padding:15px}h1{font-size:1.1rem}}
+    :root{color-scheme:light;--green:#18402D;--sage:#5C7364;--gold:#A6783F;--cream:#F2E8DF;--ink:#14241B;--red:#b91c1c;--lime:#D7FF62}
+    *{box-sizing:border-box}
+    body{margin:0;padding:14px;min-height:100vh;background:var(--cream);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+    main{max-width:650px;margin:0 auto}
+    header{background:var(--green);color:#fff;padding:17px 16px;border-radius:16px;border-bottom:4px solid var(--gold)}
+    h1{font-size:1.22rem;margin:0 0 8px}
+    header p{margin:0;color:#f4e7d7;line-height:1.8;font-size:.92rem}
+    .panel{margin-top:13px;background:#fff;border:1px solid #e0d5c9;border-radius:16px;padding:13px;box-shadow:0 4px 12px #18402d0c}
+    .instructions{background:#f7f4ed;border:1px solid #e7dac9;border-radius:10px;padding:10px 12px;line-height:1.8;font-size:.9rem;margin-bottom:12px}
+    #readerWrap{position:relative;background:#101613;border-radius:13px;overflow:hidden;min-height:230px}
+    #reader{width:100%;min-height:230px;overflow:hidden;border-radius:13px;background:#101613}
+    #reader video{width:100%!important;max-height:64vh;object-fit:contain;border-radius:12px}
+    #reader canvas{max-width:100%}
+    #reader__scan_region{min-height:220px}
+    #reader__dashboard{padding:10px;background:#f9f7f3;color:var(--ink);font-size:.9rem}
+    #reader__dashboard_section_csr button,#reader__dashboard_section_swaplink button,#reader button{border:0;border-radius:9px;background:var(--green);color:white;padding:9px 13px;font-size:.92rem;font-weight:700;margin:4px;min-height:40px}
+    #reader select{max-width:100%;padding:8px;border:1px solid #b8c8b9;border-radius:8px;font-size:.9rem}
+    #reader a{color:var(--green)}
+    .frame{position:absolute;z-index:4;pointer-events:none;top:50%;left:50%;transform:translate(-50%,-50%);width:86%;height:29%;border:0;box-shadow:0 0 0 9999px #00000012;border-radius:7px}
+    .corner{position:absolute;width:27px;height:22px;border-color:var(--lime);border-style:solid}
+    .tl{top:-2px;left:-2px;border-width:4px 0 0 4px;border-top-left-radius:6px}
+    .tr{top:-2px;right:-2px;border-width:4px 4px 0 0;border-top-right-radius:6px}
+    .bl{bottom:-2px;left:-2px;border-width:0 0 4px 4px;border-bottom-left-radius:6px}
+    .br{bottom:-2px;right:-2px;border-width:0 4px 4px 0;border-bottom-right-radius:6px}
+    .laser{position:absolute;left:3%;right:3%;height:2px;top:50%;background:#ff3b30;box-shadow:0 0 9px #ff3b30;animation:laser 2s ease-in-out infinite alternate}
+    @keyframes laser{from{transform:translateY(-36px)}to{transform:translateY(36px)}}
+    #status{margin:11px 1px 0;line-height:1.8;font-size:.92rem;overflow-wrap:anywhere}
+    .status-error{color:var(--red);font-weight:700}.status-success{color:#166534;font-weight:700}
+    #resultBox{display:none;margin-top:12px;padding:12px;border:1px solid #b8c8b9;background:#f0f7f0;border-radius:10px}
+    #resultValue{display:block;direction:ltr;text-align:center;font-size:1.25rem;font-weight:800;letter-spacing:.04em;overflow-wrap:anywhere;padding:8px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    button.action{flex:1 1 145px;min-height:44px;border:0;border-radius:10px;font-size:.94rem;font-weight:700;padding:10px 14px;cursor:pointer}
+    .primary{color:#fff;background:var(--green)}.secondary{color:var(--green);background:#eee7df}.gold{color:#fff;background:var(--gold)}
+    .small{color:var(--sage);font-size:.81rem;line-height:1.8;margin:12px 2px 0}
+    .hidden{display:none!important}
+    @media(max-width:420px){body{padding:9px}.panel{padding:9px}header{padding:14px}h1{font-size:1.08rem}#reader__scan_region{min-height:195px}}
   </style>
 </head>
 <body>
 <main>
   <header>
-    <h1>قارئ الباركود المستقل</h1>
-    <p>وجّه الكاميرا الخلفية إلى الباركود وثبّت الهاتف لحظة. بعد القراءة، ستعود القيمة إلى خانة البحث في المتجر تلقائيًا.</p>
+    <h1>قارئ الباركود الحي</h1>
+    <p>ده قارئ باركود داخل صفحة الويب، مش تطبيق الكاميرا العادي. وجّه خطوط الباركود إلى الإطار الأخضر وثبّت الهاتف لحظة حتى تظهر القيمة.</p>
   </header>
-
   <section class="panel">
-    <div id="reader" aria-label="عرض الكاميرا"></div>
-    <p id="status" role="status" aria-live="polite">اضغط «بدء المسح» واسمح للمتصفح باستخدام الكاميرا. تعمل القراءة داخل جهازك؛ لا تُرفع صورة الكاميرا إلى خادم.</p>
-    <div class="controls">
-      <button id="startBtn" class="primary" type="button">بدء المسح بالكاميرا</button>
-      <button id="stopBtn" class="secondary" type="button" disabled>إيقاف الكاميرا</button>
+    <div class="instructions"><strong>طريقة الاستخدام:</strong> اضغط «بدء المسح»، ثم ضع الباركود الأفقي داخل الإطار. حاول أن يكون الرمز واضحًا، دون انعكاس ضوء، وأن تظهر كل الخطوط كاملة.</div>
+    <div id="readerWrap">
+      <div id="reader"></div>
+      <div class="frame" aria-hidden="true"><span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span><span class="laser"></span></div>
     </div>
+    <p id="status" role="status" aria-live="polite">جارٍ تجهيز قارئ الباركود. ستظهر هنا حالة تشغيل محرك القراءة أو أي خطأ واضح.</p>
     <div id="resultBox">
-      <p style="margin:0;text-align:center;font-weight:700">تمت قراءة الرمز</p>
+      <p style="margin:0;text-align:center;font-weight:700">تمت قراءة الباركود بنجاح</p>
       <output id="resultValue"></output>
       <div class="controls">
-        <button id="copyBtn" class="gold" type="button">نسخ القيمة</button>
-        <button id="retryBtn" class="secondary" type="button">مسح رمز آخر</button>
+        <button id="copyBtn" class="action gold" type="button">نسخ القيمة</button>
+        <button id="retryBtn" class="action secondary" type="button">مسح رمز آخر</button>
       </div>
-      <p id="fallbackNote" class="small">إذا لم تعد القيمة للمتجر تلقائيًا، انسخها ثم ارجع إلى المتجر والصقها في خانة البحث.</p>
+      <p id="fallbackNote" class="small">إذا لم تعد القيمة إلى المتجر تلقائيًا، انسخها والصقها في خانة البحث.</p>
     </div>
-    <p class="small">تحتاج الكاميرا إلى رابط HTTPS ومتصفح يسمح باستخدامها. لو لم تظهر نافذة الإذن، افتح إعدادات الموقع واسمح بالكاميرا. تجنّب إرسال رابط الماسح الذي يحتوي على nonce إلى شخص آخر؛ استخدمه من زر المتجر.</p>
+    <p class="small">القراءة تتم داخل المتصفح. صفحة الاستضافة لا تستقبل صور الكاميرا أو بيانات الكتب. يلزم اتصال إنترنت لتحميل مكتبة القراءة من شبكة توزيع المحتوى (CDN).</p>
   </section>
 </main>
 <script>
 (() => {
   'use strict';
-  const params = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(location.search);
   const nonce = params.get('nonce') || '';
   const openerOrigin = params.get('openerOrigin') || '';
   const statusEl = document.getElementById('status');
-  const startBtn = document.getElementById('startBtn');
-  const stopBtn = document.getElementById('stopBtn');
   const resultBox = document.getElementById('resultBox');
   const resultValue = document.getElementById('resultValue');
   const copyBtn = document.getElementById('copyBtn');
@@ -78,6 +85,7 @@
   let scanning = false;
   let resultFound = false;
   let libraryPromise = null;
+  let scanTimer = null;
 
   function setStatus(message, kind) {
     statusEl.textContent = message;
@@ -92,73 +100,85 @@
         'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
         'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js'
       ];
-      let index = 0;
-      const tryNext = () => {
-        if (index >= sources.length) { reject(new Error('تعذر تحميل مكتبة المسح؛ تحقق من اتصال الإنترنت.')); return; }
+      let idx = 0;
+      const attempt = () => {
+        if (idx >= sources.length) {
+          reject(new Error('لم يتم تحميل محرك قراءة الباركود من مصادر المكتبة. تحقق من الإنترنت أو جرّب شبكة أخرى.'));
+          return;
+        }
         const script = document.createElement('script');
-        script.src = sources[index++];
+        script.src = sources[idx++];
         script.async = true;
-        script.onload = () => window.Html5Qrcode ? resolve() : tryNext();
-        script.onerror = () => { script.remove(); tryNext(); };
+        script.onload = () => window.Html5Qrcode ? resolve() : attempt();
+        script.onerror = () => { script.remove(); attempt(); };
         document.head.appendChild(script);
       };
-      tryNext();
+      attempt();
     }).catch(error => { libraryPromise = null; throw error; });
     return libraryPromise;
   }
 
+  function getFormats() {
+    const F = window.Html5QrcodeSupportedFormats;
+    // Common book/product label formats, with ZXing software decoding forced below.
+    return [F.CODE_128, F.CODE_39, F.CODE_93, F.CODABAR, F.EAN_13, F.EAN_8,
+      F.UPC_A, F.UPC_E, F.ITF, F.QR_CODE, F.DATA_MATRIX, F.PDF_417]
+      .filter(value => value !== undefined);
+  }
+
   async function stopScanner() {
     if (scanner && scanning) {
-      try { await scanner.stop(); } catch (error) { /* قد تكون الكاميرا توقفت بالفعل */ }
+      try { await scanner.stop(); } catch (ignored) {}
     }
     scanning = false;
-    stopBtn.disabled = true;
-    startBtn.disabled = false;
+    if (scanTimer) { clearTimeout(scanTimer); scanTimer = null; }
   }
 
   async function startScanner() {
     if (scanning || resultFound) return;
-    startBtn.disabled = true;
-    setStatus('جارٍ تجهيز الكاميرا…');
+    setStatus('جارٍ تحميل قارئ الباركود وتجهيز الكاميرا…');
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('هذا المتصفح لا يتيح الكاميرا الحية هنا. افتح الصفحة في Chrome أو Safari حديث، وتأكد من استخدام HTTPS.');
+        throw new Error('المتصفح لا يتيح الكاميرا هنا. افتح الرابط من Chrome أو Safari حديث عبر HTTPS.');
       }
       await loadLibrary();
       if (!scanner) {
-        const formats = window.Html5QrcodeSupportedFormats;
-        const preferredFormats = formats ? [
-          formats.CODE_128, formats.CODE_39, formats.CODE_93, formats.CODABAR,
-          formats.EAN_13, formats.EAN_8, formats.UPC_A, formats.UPC_E,
-          formats.ITF, formats.QR_CODE, formats.DATA_MATRIX, formats.PDF_417
-        ].filter(value => value !== undefined) : undefined;
-        scanner = new window.Html5Qrcode('reader', { verbose: false, formatsToSupport: preferredFormats });
+        scanner = new window.Html5Qrcode('reader', {
+          verbose: false,
+          formatsToSupport: getFormats(),
+          // Disable the experimental native BarcodeDetector path and use ZXing decoding,
+          // which supports the common 1D product/book label formats such as EAN-13 and Code 128.
+          useBarCodeDetectorIfSupported: false
+        });
       }
+      const reader = document.getElementById('reader');
+      reader.innerHTML = '';
       const config = {
         fps: 12,
-        aspectRatio: 1.45,
-        qrbox: (viewfinderWidth, viewfinderHeight) => ({
-          width: Math.max(180, Math.min(420, Math.floor(viewfinderWidth * 0.88))),
-          height: Math.max(75, Math.min(180, Math.floor(viewfinderHeight * 0.30)))
+        aspectRatio: 1.333333,
+        qrbox: (width, height) => ({
+          width: Math.max(220, Math.min(520, Math.floor(width * 0.86))),
+          height: Math.max(80, Math.min(155, Math.floor(height * 0.29)))
         }),
-        videoConstraints: { facingMode: 'environment' }
+        videoConstraints: { facingMode: { ideal: 'environment' } }
       };
       await scanner.start(
-        { facingMode: 'environment' },
+        { facingMode: { ideal: 'environment' } },
         config,
         decodedText => onDecoded(decodedText),
-        () => {}
+        () => { /* عدم العثور على رمز في كل إطار أمر طبيعي؛ يستمر المسح */ }
       );
       scanning = true;
-      stopBtn.disabled = false;
-      startBtn.disabled = true;
-      setStatus('الكاميرا تعمل. قرّب الباركود داخل الإطار مع إضاءة جيدة.');
+      setStatus('محرك قراءة الباركود يعمل الآن. وجّه الخطوط إلى الإطار الأخضر؛ القراءة تلقائية ولا تحتاج إلى الضغط على زر التقاط.', 'success');
+      scanTimer = setTimeout(() => {
+        if (scanning && !resultFound) {
+          setStatus('القارئ يعمل ويحلّل الصورة مباشرة. قرّب الباركود واجعل الخطوط أفقية وواضحة داخل الإطار، وجرب إضاءة أقوى.');
+        }
+      }, 7000);
     } catch (error) {
       scanning = false;
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-      const message = String(error && error.message || error || 'تعذر تشغيل الكاميرا.');
-      setStatus('تعذر تشغيل الكاميرا: ' + message + ' إذا رفضت الإذن سابقًا، اسمح بالكاميرا من إعدادات الموقع ثم أعد المحاولة.', 'error');
+      const message = String(error && error.message || error || 'تعذر تشغيل قارئ الباركود.');
+      setStatus('لم يبدأ قارئ الباركود: ' + message, 'error');
     }
   }
 
@@ -170,58 +190,54 @@
     await stopScanner();
     resultValue.textContent = value;
     resultBox.style.display = 'block';
-
     let delivered = false;
     if (window.opener && !window.opener.closed && nonce && openerOrigin) {
       try {
         window.opener.postMessage({ type: 'NOOR_BARCODE_SCAN', nonce, value }, openerOrigin);
         delivered = true;
-      } catch (error) {
-        delivered = false;
-      }
+      } catch (ignored) { delivered = false; }
     }
-
     if (delivered) {
-      setStatus('تمت القراءة وإرسال القيمة إلى المتجر. ستُغلق هذه الصفحة تلقائيًا.', 'success');
-      fallbackNote.textContent = 'إذا لم تُحدّث خانة البحث بعد لحظات، انسخ القيمة والصقها يدويًا في المتجر.';
-      setTimeout(() => { try { window.close(); } catch (ignored) {} }, 900);
+      setStatus('تمت قراءة الباركود وإرسال قيمته إلى المتجر. ستُغلق الصفحة تلقائيًا.', 'success');
+      fallbackNote.textContent = 'إذا لم تتغير خانة البحث، انسخ القيمة والصقها يدويًا.';
+      setTimeout(() => { try { window.close(); } catch (ignored) {} }, 1000);
     } else {
-      setStatus('تمت القراءة، لكن المتصفح لم يسمح بإعادة القيمة تلقائيًا. استخدم زر النسخ.', 'success');
+      setStatus('تمت قراءة الباركود بنجاح. هذه الصفحة مفتوحة بشكل مستقل؛ انسخ القيمة أو افتحها من زر المتجر لإرجاع النتيجة تلقائيًا.', 'success');
       fallbackNote.classList.remove('hidden');
     }
   }
 
-  startBtn.addEventListener('click', startScanner);
-  stopBtn.addEventListener('click', async () => {
-    await stopScanner();
-    setStatus('تم إيقاف الكاميرا. اضغط «بدء المسح» للاستمرار.');
-  });
-  retryBtn.addEventListener('click', async () => {
+  async function resetScanner() {
     await stopScanner();
     resultFound = false;
     resultBox.style.display = 'none';
     resultValue.textContent = '';
+    if (scanner) {
+      try { scanner.clear(); } catch (ignored) {}
+      scanner = null;
+    }
     document.getElementById('reader').innerHTML = '';
-    scanner = null;
-    setStatus('جاهز لمسح رمز آخر.');
+    setStatus('جارٍ إعادة تشغيل قارئ الباركود…');
     startScanner();
-  });
+  }
+
   copyBtn.addEventListener('click', async () => {
     const value = resultValue.textContent || '';
     try {
       await navigator.clipboard.writeText(value);
       copyBtn.textContent = 'تم النسخ';
-      setTimeout(() => { copyBtn.textContent = 'نسخ القيمة'; }, 1600);
+      setTimeout(() => { copyBtn.textContent = 'نسخ القيمة'; }, 1500);
     } catch (error) {
       const range = document.createRange();
       range.selectNodeContents(resultValue);
       const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      setStatus('حدّدنا القيمة؛ انسخها يدويًا، ثم الصقها في المتجر.', 'success');
+      selection.removeAllRanges(); selection.addRange(range);
+      setStatus('تم تحديد القيمة؛ استخدم نسخ من قائمة الهاتف.', 'success');
     }
   });
+  retryBtn.addEventListener('click', resetScanner);
   window.addEventListener('pagehide', () => { try { if (scanner && scanning) scanner.stop(); } catch (ignored) {} });
+  startScanner();
 })();
 </script>
 </body>
