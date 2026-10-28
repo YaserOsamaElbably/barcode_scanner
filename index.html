@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#18402D">
+  <title>قارئ الباركود المستقل | نور السنة ستور</title>
+  <style>
+    :root { color-scheme: light; --green:#18402D; --sage:#5C7364; --gold:#A6783F; --cream:#F2E8DF; --ink:#14241B; --red:#b91c1c; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:16px; min-height:100vh; background:var(--cream); color:var(--ink); font-family:Tahoma,Arial,sans-serif; }
+    main { max-width:620px; margin:0 auto; }
+    header { background:var(--green); color:#fff; padding:18px 16px; border-radius:16px; border-bottom:4px solid var(--gold); }
+    h1 { font-size:1.25rem; margin:0 0 7px; }
+    header p { margin:0; color:#f4e7d7; line-height:1.7; font-size:.92rem; }
+    .panel { margin-top:14px; background:#fff; border:1px solid #e0d5c9; border-radius:16px; padding:14px; box-shadow:0 4px 12px #18402d0c; }
+    #reader { width:100%; overflow:hidden; border-radius:12px; background:#f8f5f0; min-height:80px; }
+    #reader video { width:100% !important; max-height:62vh; object-fit:cover; border-radius:10px; }
+    #reader img { max-width:100%; }
+    #status { margin:12px 0 0; line-height:1.7; font-size:.93rem; overflow-wrap:anywhere; }
+    .status-error { color:var(--red); }
+    .status-success { color:#166534; font-weight:700; }
+    .controls { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    button { flex:1 1 145px; min-height:46px; border:0; border-radius:10px; font-size:.95rem; font-weight:700; padding:10px 14px; cursor:pointer; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .primary { color:#fff; background:var(--green); }
+    .secondary { color:var(--green); background:#eee7df; }
+    .gold { color:#fff; background:var(--gold); }
+    #resultBox { display:none; margin-top:12px; padding:12px; border:1px solid #b8c8b9; background:#f0f7f0; border-radius:10px; }
+    #resultValue { display:block; direction:ltr; text-align:center; font-size:1.25rem; font-weight:800; letter-spacing:.04em; overflow-wrap:anywhere; padding:8px; }
+    .small { color:#5c7364; font-size:.82rem; line-height:1.7; margin:12px 2px 0; }
+    a { color:var(--green); }
+    .hidden { display:none !important; }
+    @media(max-width:420px){body{padding:10px}.panel{padding:10px}header{padding:15px}h1{font-size:1.1rem}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>قارئ الباركود المستقل</h1>
+    <p>وجّه الكاميرا الخلفية إلى الباركود وثبّت الهاتف لحظة. بعد القراءة، ستعود القيمة إلى خانة البحث في المتجر تلقائيًا.</p>
+  </header>
+
+  <section class="panel">
+    <div id="reader" aria-label="عرض الكاميرا"></div>
+    <p id="status" role="status" aria-live="polite">اضغط «بدء المسح» واسمح للمتصفح باستخدام الكاميرا. تعمل القراءة داخل جهازك؛ لا تُرفع صورة الكاميرا إلى خادم.</p>
+    <div class="controls">
+      <button id="startBtn" class="primary" type="button">بدء المسح بالكاميرا</button>
+      <button id="stopBtn" class="secondary" type="button" disabled>إيقاف الكاميرا</button>
+    </div>
+    <div id="resultBox">
+      <p style="margin:0;text-align:center;font-weight:700">تمت قراءة الرمز</p>
+      <output id="resultValue"></output>
+      <div class="controls">
+        <button id="copyBtn" class="gold" type="button">نسخ القيمة</button>
+        <button id="retryBtn" class="secondary" type="button">مسح رمز آخر</button>
+      </div>
+      <p id="fallbackNote" class="small">إذا لم تعد القيمة للمتجر تلقائيًا، انسخها ثم ارجع إلى المتجر والصقها في خانة البحث.</p>
+    </div>
+    <p class="small">تحتاج الكاميرا إلى رابط HTTPS ومتصفح يسمح باستخدامها. لو لم تظهر نافذة الإذن، افتح إعدادات الموقع واسمح بالكاميرا. تجنّب إرسال رابط الماسح الذي يحتوي على nonce إلى شخص آخر؛ استخدمه من زر المتجر.</p>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const params = new URLSearchParams(window.location.search);
+  const nonce = params.get('nonce') || '';
+  const openerOrigin = params.get('openerOrigin') || '';
+  const statusEl = document.getElementById('status');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const resultBox = document.getElementById('resultBox');
+  const resultValue = document.getElementById('resultValue');
+  const copyBtn = document.getElementById('copyBtn');
+  const retryBtn = document.getElementById('retryBtn');
+  const fallbackNote = document.getElementById('fallbackNote');
+  let scanner = null;
+  let scanning = false;
+  let resultFound = false;
+  let libraryPromise = null;
+
+  function setStatus(message, kind) {
+    statusEl.textContent = message;
+    statusEl.className = kind === 'error' ? 'status-error' : kind === 'success' ? 'status-success' : '';
+  }
+
+  function loadLibrary() {
+    if (window.Html5Qrcode) return Promise.resolve();
+    if (libraryPromise) return libraryPromise;
+    libraryPromise = new Promise((resolve, reject) => {
+      const sources = [
+        'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
+        'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js'
+      ];
+      let index = 0;
+      const tryNext = () => {
+        if (index >= sources.length) { reject(new Error('تعذر تحميل مكتبة المسح؛ تحقق من اتصال الإنترنت.')); return; }
+        const script = document.createElement('script');
+        script.src = sources[index++];
+        script.async = true;
+        script.onload = () => window.Html5Qrcode ? resolve() : tryNext();
+        script.onerror = () => { script.remove(); tryNext(); };
+        document.head.appendChild(script);
+      };
+      tryNext();
+    }).catch(error => { libraryPromise = null; throw error; });
+    return libraryPromise;
+  }
+
+  async function stopScanner() {
+    if (scanner && scanning) {
+      try { await scanner.stop(); } catch (error) { /* قد تكون الكاميرا توقفت بالفعل */ }
+    }
+    scanning = false;
+    stopBtn.disabled = true;
+    startBtn.disabled = false;
+  }
+
+  async function startScanner() {
+    if (scanning || resultFound) return;
+    startBtn.disabled = true;
+    setStatus('جارٍ تجهيز الكاميرا…');
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('هذا المتصفح لا يتيح الكاميرا الحية هنا. افتح الصفحة في Chrome أو Safari حديث، وتأكد من استخدام HTTPS.');
+      }
+      await loadLibrary();
+      if (!scanner) {
+        const formats = window.Html5QrcodeSupportedFormats;
+        const preferredFormats = formats ? [
+          formats.CODE_128, formats.CODE_39, formats.CODE_93, formats.CODABAR,
+          formats.EAN_13, formats.EAN_8, formats.UPC_A, formats.UPC_E,
+          formats.ITF, formats.QR_CODE, formats.DATA_MATRIX, formats.PDF_417
+        ].filter(value => value !== undefined) : undefined;
+        scanner = new window.Html5Qrcode('reader', { verbose: false, formatsToSupport: preferredFormats });
+      }
+      const config = {
+        fps: 12,
+        aspectRatio: 1.45,
+        qrbox: (viewfinderWidth, viewfinderHeight) => ({
+          width: Math.max(180, Math.min(420, Math.floor(viewfinderWidth * 0.88))),
+          height: Math.max(75, Math.min(180, Math.floor(viewfinderHeight * 0.30)))
+        }),
+        videoConstraints: { facingMode: 'environment' }
+      };
+      await scanner.start(
+        { facingMode: 'environment' },
+        config,
+        decodedText => onDecoded(decodedText),
+        () => {}
+      );
+      scanning = true;
+      stopBtn.disabled = false;
+      startBtn.disabled = true;
+      setStatus('الكاميرا تعمل. قرّب الباركود داخل الإطار مع إضاءة جيدة.');
+    } catch (error) {
+      scanning = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      const message = String(error && error.message || error || 'تعذر تشغيل الكاميرا.');
+      setStatus('تعذر تشغيل الكاميرا: ' + message + ' إذا رفضت الإذن سابقًا، اسمح بالكاميرا من إعدادات الموقع ثم أعد المحاولة.', 'error');
+    }
+  }
+
+  async function onDecoded(decodedText) {
+    if (resultFound) return;
+    const value = String(decodedText == null ? '' : decodedText).trim();
+    if (!value) return;
+    resultFound = true;
+    await stopScanner();
+    resultValue.textContent = value;
+    resultBox.style.display = 'block';
+
+    let delivered = false;
+    if (window.opener && !window.opener.closed && nonce && openerOrigin) {
+      try {
+        window.opener.postMessage({ type: 'NOOR_BARCODE_SCAN', nonce, value }, openerOrigin);
+        delivered = true;
+      } catch (error) {
+        delivered = false;
+      }
+    }
+
+    if (delivered) {
+      setStatus('تمت القراءة وإرسال القيمة إلى المتجر. ستُغلق هذه الصفحة تلقائيًا.', 'success');
+      fallbackNote.textContent = 'إذا لم تُحدّث خانة البحث بعد لحظات، انسخ القيمة والصقها يدويًا في المتجر.';
+      setTimeout(() => { try { window.close(); } catch (ignored) {} }, 900);
+    } else {
+      setStatus('تمت القراءة، لكن المتصفح لم يسمح بإعادة القيمة تلقائيًا. استخدم زر النسخ.', 'success');
+      fallbackNote.classList.remove('hidden');
+    }
+  }
+
+  startBtn.addEventListener('click', startScanner);
+  stopBtn.addEventListener('click', async () => {
+    await stopScanner();
+    setStatus('تم إيقاف الكاميرا. اضغط «بدء المسح» للاستمرار.');
+  });
+  retryBtn.addEventListener('click', async () => {
+    await stopScanner();
+    resultFound = false;
+    resultBox.style.display = 'none';
+    resultValue.textContent = '';
+    document.getElementById('reader').innerHTML = '';
+    scanner = null;
+    setStatus('جاهز لمسح رمز آخر.');
+    startScanner();
+  });
+  copyBtn.addEventListener('click', async () => {
+    const value = resultValue.textContent || '';
+    try {
+      await navigator.clipboard.writeText(value);
+      copyBtn.textContent = 'تم النسخ';
+      setTimeout(() => { copyBtn.textContent = 'نسخ القيمة'; }, 1600);
+    } catch (error) {
+      const range = document.createRange();
+      range.selectNodeContents(resultValue);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      setStatus('حدّدنا القيمة؛ انسخها يدويًا، ثم الصقها في المتجر.', 'success');
+    }
+  });
+  window.addEventListener('pagehide', () => { try { if (scanner && scanning) scanner.stop(); } catch (ignored) {} });
+})();
+</script>
+</body>
+</html>
